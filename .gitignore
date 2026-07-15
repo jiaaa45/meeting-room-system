@@ -1,0 +1,14 @@
+# Maven 編譯產生的東西,不需要進版控
+target/
+
+# IDE 自己的設定檔,每個人電腦不一樣,不該共用
+.idea/
+*.iml
+.vscode/
+
+# 作業系統自己產生的垃圾檔
+.DS_Store
+Thumbs.db
+
+# 如果之後有存密碼/API Key 的檔案
+.env
