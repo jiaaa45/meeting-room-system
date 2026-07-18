@@ -21,7 +21,7 @@
 - [x] V2:`users` 表(email UNIQUE、role CHECK 限制)
 - [x] V3:`reservations` 表(外鍵、status CHECK、時間順序 CHECK、三個複合 Index)
 - [x] V4:`reservation_reviews` 表(雙外鍵、action CHECK、Index)
-- [ ] V5:初始化假資料 SQL(5 位使用者、5 間會議室、10+ 筆預約)
+- [x] V5:初始化假資料 SQL(5 位使用者、5 間會議室、10+ 筆預約)
 
 ## 階段 2:Java Entity 與基礎架構
 
