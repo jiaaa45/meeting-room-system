@@ -1,0 +1,9 @@
+{
+  "roomId": 1,
+  "userId": 1,
+  "startTime": "2026-08-01T10:00:00",
+  "endTime": "2026-08-01T11:00:00",
+  "subject": "測試預約",
+  "purpose": "驗證建立預約功能",
+  "attendeeCount": 4
+}

@@ -48,32 +48,32 @@
 ## 階段 4:User 模組 1hr
 
 - [x] User Repository
-- [ ] User DTO
-- [ ] User Mapper
-- [ ] User Service(含 email 重複檢查)
-- [ ] User Controller
-  - [ ] `POST /api/users`
-  - [ ] `GET /api/users`
-  - [ ] `GET /api/users/{id}`
+- [x] User DTO
+- [x] User Mapper
+- [x] User Service(含 email 重複檢查)
+- [x] User Controller
+  - [x] `POST /api/users`
+  - [x] `GET /api/users`
+  - [x] `GET /api/users/{id}`
 
 ## 階段 5:Reservation 核心邏輯(整題靈魂) 4-6hr
 
-- [ ] Reservation DTO(Request / Response)
+- [x] Reservation DTO(Request / Response)
 - [x] Reservation Repository
   - [x] 時間重疊衝突查詢(JPQL / Native Query)
-- [ ] Reservation Service - 建立預約驗證規則
-  - [ ] roomId / userId 必須存在
-  - [ ] startTime < endTime
-  - [ ] 不可預約過去時間
-  - [ ] 時間需以 30 分鐘為單位
-  - [ ] attendeeCount 不可超過會議室容量
-  - [ ] 同會議室同時段不可重複預約(時間區間重疊判斷)
-  - [ ] rejected / cancelled 不視為佔用
-  - [ ] processing / approved 視為佔用
-- [ ] Transaction + 併發鎖(Pessimistic Lock 或選定方案)實作
-- [ ] Reservation Controller
-  - [ ] `POST /api/reservations`
-  - [ ] 衝突時回傳 409 Conflict
+- [x] Reservation Service - 建立預約驗證規則
+  - [x] roomId / userId 必須存在
+  - [x] startTime < endTime
+  - [x] 不可預約過去時間
+  - [x] 時間需以 30 分鐘為單位
+  - [x] attendeeCount 不可超過會議室容量
+  - [x] 同會議室同時段不可重複預約(時間區間重疊判斷)
+  - [x] rejected / cancelled 不視為佔用
+  - [x] processing / approved 視為佔用
+- [x] Transaction + 併發鎖(Pessimistic Lock 或選定方案)實作
+- [x] Reservation Controller
+  - [x] `POST /api/reservations`
+  - [x] 衝突時回傳 409 Conflict
 
 ## 階段 6:退回與審核流程 2-3hr
 
