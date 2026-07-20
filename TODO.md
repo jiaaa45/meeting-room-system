@@ -34,7 +34,7 @@
 
 ## 階段 3:Room 模組(建立 CRUD 開發模式) 2-3hr
 
-- [ ] Room Repository
+- [x] Room Repository
 - [ ] Room DTO(Request / Response 分開)
 - [ ] Room Mapper(Entity ↔ DTO 轉換)
 - [ ] Room Service
@@ -47,7 +47,7 @@
 
 ## 階段 4:User 模組 1hr
 
-- [ ] User Repository
+- [x] User Repository
 - [ ] User DTO
 - [ ] User Mapper
 - [ ] User Service(含 email 重複檢查)
@@ -59,8 +59,8 @@
 ## 階段 5:Reservation 核心邏輯(整題靈魂) 4-6hr
 
 - [ ] Reservation DTO(Request / Response)
-- [ ] Reservation Repository
-  - [ ] 時間重疊衝突查詢(JPQL / Native Query)
+- [x] Reservation Repository
+  - [x] 時間重疊衝突查詢(JPQL / Native Query)
 - [ ] Reservation Service - 建立預約驗證規則
   - [ ] roomId / userId 必須存在
   - [ ] startTime < endTime
