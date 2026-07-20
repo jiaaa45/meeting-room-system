@@ -35,15 +35,15 @@
 ## 階段 3:Room 模組(建立 CRUD 開發模式) 2-3hr
 
 - [x] Room Repository
-- [ ] Room DTO(Request / Response 分開)
-- [ ] Room Mapper(Entity ↔ DTO 轉換)
-- [ ] Room Service
-- [ ] Room Controller
-  - [ ] `POST /api/rooms`
-  - [ ] `GET /api/rooms`
-  - [ ] `GET /api/rooms/{id}`
-  - [ ] `PUT /api/rooms/{id}`
-  - [ ] `DELETE /api/rooms/{id}`(軟刪除,設 is_active = false)
+- [x] Room DTO(Request / Response 分開)
+- [x] Room Mapper(Entity ↔ DTO 轉換)
+- [x] Room Service
+- [x] Room Controller
+  - [x] `POST /api/rooms`
+  - [x] `GET /api/rooms`
+  - [x] `GET /api/rooms/{id}`
+  - [x] `PUT /api/rooms/{id}`
+  - [x] `DELETE /api/rooms/{id}`(軟刪除,設 is_active = false)
 
 ## 階段 4:User 模組 1hr
 
