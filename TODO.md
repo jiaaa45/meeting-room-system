@@ -25,14 +25,14 @@
 
 ## 階段 2:Java Entity 與基礎架構
 
-- [ ] `Room` Entity
-- [ ] `User` Entity + `Role` Enum
-- [ ] `Reservation` Entity + `ReservationStatus` Enum
-- [ ] `ReservationReview` Entity + `ReviewAction` Enum
-- [ ] Entity 關聯設定(多對一,避免不必要的 EAGER loading)
+- [x] `Room` Entity
+- [x] `User` Entity + `Role` Enum
+- [x] `Reservation` Entity + `ReservationStatus` Enum
+- [x] `ReservationReview` Entity + `ReviewAction` Enum
+- [x] Entity 關聯設定(多對一,避免不必要的 EAGER loading)
 - [ ] 確認無循環序列化問題
 
-## 階段 3:Room 模組(建立 CRUD 開發模式)
+## 階段 3:Room 模組(建立 CRUD 開發模式) 2-3hr
 
 - [ ] Room Repository
 - [ ] Room DTO(Request / Response 分開)
@@ -45,7 +45,7 @@
   - [ ] `PUT /api/rooms/{id}`
   - [ ] `DELETE /api/rooms/{id}`(軟刪除,設 is_active = false)
 
-## 階段 4:User 模組
+## 階段 4:User 模組 1hr
 
 - [ ] User Repository
 - [ ] User DTO
@@ -56,7 +56,7 @@
   - [ ] `GET /api/users`
   - [ ] `GET /api/users/{id}`
 
-## 階段 5:Reservation 核心邏輯(整題靈魂)
+## 階段 5:Reservation 核心邏輯(整題靈魂) 4-6hr
 
 - [ ] Reservation DTO(Request / Response)
 - [ ] Reservation Repository
@@ -75,7 +75,7 @@
   - [ ] `POST /api/reservations`
   - [ ] 衝突時回傳 409 Conflict
 
-## 階段 6:退回與審核流程
+## 階段 6:退回與審核流程 2-3hr
 
 - [ ] `POST /api/reservations/{id}/cancel-request`
   - [ ] 僅本人可申請
@@ -86,7 +86,7 @@
   - [ ] 寫入 ReservationReview 紀錄
   - [ ] approved → 狀態變 cancelled;rejected → 狀態還原
 
-## 階段 7:查詢類 API
+## 階段 7:查詢類 API 3-4hr
 
 - [ ] `GET /api/reservations`(分頁、排序、多條件篩選)
 - [ ] `GET /api/rooms/{roomId}/reservations`
@@ -94,13 +94,13 @@
 - [ ] `GET /api/reservations/monthly-summary?year=&month=`
 - [ ] `GET /api/rooms/top-used?year=&month=`
 
-## 階段 8:Validation 與錯誤處理
+## 階段 8:Validation 與錯誤處理 2-3hr
 
 - [ ] Bean Validation 註解(@NotNull、@Email 等)
 - [ ] `GlobalExceptionHandler`(@RestControllerAdvice)
   - [ ] 400 / 403 / 404 / 409 / 500 統一格式
 
-## 階段 9:測試
+## 階段 9:測試 5-8hr
 
 - [ ] Unit Test(JUnit5 + Mockito)- 至少涵蓋 16 項情境
 - [ ] Repository Test(@DataJpaTest)
@@ -109,7 +109,7 @@
 - [ ] Concurrency Test(模擬雙執行緒搶同時段)〔加分〕
 - [ ] JaCoCo 覆蓋率報告〔加分〕
 
-## 階段 10:文件
+## 階段 10:文件 2-3hr
 
 - [ ] README.md(啟動方式、API 清單、schema 說明、衝突邏輯、transaction/lock、index、測試方式、已完成/未完成、可改善之處)
 - [ ] README - Design Decisions
