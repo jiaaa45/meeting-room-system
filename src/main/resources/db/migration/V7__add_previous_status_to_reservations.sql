@@ -1,0 +1,1 @@
+ALTER TABLE reservations ADD COLUMN previous_status VARCHAR(20);

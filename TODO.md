@@ -77,14 +77,14 @@
 
 ## 階段 6:退回與審核流程 2-3hr
 
-- [ ] `POST /api/reservations/{id}/cancel-request`
-  - [ ] 僅本人可申請
-  - [ ] rejected/cancelled 不可再申請
-  - [ ] 狀態轉為 cancel_requested
-- [ ] `POST /api/reservations/{id}/review`
-  - [ ] 僅 REVIEWER/ADMIN 可審核
-  - [ ] 寫入 ReservationReview 紀錄
-  - [ ] approved → 狀態變 cancelled;rejected → 狀態還原
+- [x] `POST /api/reservations/{id}/cancel-request`
+  - [x] 僅本人可申請
+  - [x] rejected/cancelled 不可再申請
+  - [x] 狀態轉為 cancel_requested
+- [x] `POST /api/reservations/{id}/review`
+  - [x] 僅 REVIEWER/ADMIN 可審核
+  - [x] 寫入 ReservationReview 紀錄
+  - [x] approved → 狀態變 cancelled;rejected → 狀態還原
 
 ## 階段 7:查詢類 API 3-4hr
 
@@ -96,9 +96,9 @@
 
 ## 階段 8:Validation 與錯誤處理 2-3hr
 
-- [ ] Bean Validation 註解(@NotNull、@Email 等)
-- [ ] `GlobalExceptionHandler`(@RestControllerAdvice)
-  - [ ] 400 / 403 / 404 / 409 / 500 統一格式
+- [x] Bean Validation 註解(@NotNull、@Email 等)
+- [x] `GlobalExceptionHandler`(@RestControllerAdvice)
+  - [x] 400 / 403 / 404 / 409 / 500 統一格式
 
 ## 階段 9:測試 5-8hr
 

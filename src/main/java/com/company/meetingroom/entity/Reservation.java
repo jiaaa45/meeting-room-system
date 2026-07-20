@@ -9,6 +9,9 @@ import lombok.Builder;
 
 import java.time.LocalDateTime;
 
+import com.company.meetingroom.exception.ForbiddenException;
+import com.company.meetingroom.exception.InvalidReservationException;
+
 @Entity
 @Table(name = "reservations")
 @Getter
@@ -49,9 +52,36 @@ public class Reservation {
     @Column(nullable = false, length = 20)
     private ReservationStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "previous_status", length = 20)
+    private ReservationStatus previousStatus;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public void requestCancel(Long requestingUserId) {
+        if (!this.user.getId().equals(requestingUserId)) {
+            throw new ForbiddenException("只有預約本人可以申請退回");
+        }
+        if (this.status == ReservationStatus.REJECTED || this.status == ReservationStatus.CANCELLED) {
+            throw new InvalidReservationException("此預約狀態不可再次申請退回");
+        }
+        this.previousStatus = this.status;
+        this.status = ReservationStatus.CANCEL_REQUESTED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void approveCancelRequest() {
+        this.status = ReservationStatus.CANCELLED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void rejectCancelRequest() {
+        this.status = this.previousStatus;
+        this.previousStatus = null;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

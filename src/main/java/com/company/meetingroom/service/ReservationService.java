@@ -16,6 +16,13 @@ import com.company.meetingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.company.meetingroom.dto.CancelRequestDto;
+import com.company.meetingroom.dto.ReviewRequestDto;
+import com.company.meetingroom.entity.ReservationReview;
+import com.company.meetingroom.entity.ReviewAction;
+import com.company.meetingroom.entity.Role;
+import com.company.meetingroom.exception.ForbiddenException;
+import com.company.meetingroom.repository.ReservationReviewRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +38,7 @@ public class ReservationService {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final ReservationMapper reservationMapper;
+    private final ReservationReviewRepository reservationReviewRepository;
 
     @Transactional
     public ReservationResponseDto create(ReservationRequestDto requestDto) {
@@ -67,6 +75,52 @@ public class ReservationService {
 
         Reservation saved = reservationRepository.save(reservation);
         return reservationMapper.toResponseDto(saved);
+    }
+
+    @Transactional
+    public ReservationResponseDto cancelRequest(Long reservationId, CancelRequestDto requestDto) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException("找不到 id 為 " + reservationId + " 的預約"));
+
+        reservation.requestCancel(requestDto.getUserId());
+
+        return reservationMapper.toResponseDto(reservation);
+    }
+
+    @Transactional
+    public ReservationResponseDto review(Long reservationId, ReviewRequestDto requestDto) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException("找不到 id 為 " + reservationId + " 的預約"));
+
+        User reviewer = userRepository.findById(requestDto.getReviewerId())
+                .orElseThrow(() -> new ResourceNotFoundException("找不到 id 為 " + requestDto.getReviewerId() + " 的使用者"));
+
+        if (reviewer.getRole() != Role.REVIEWER && reviewer.getRole() != Role.ADMIN) {
+            throw new ForbiddenException("只有 REVIEWER 或 ADMIN 可以審核");
+        }
+
+        if (reservation.getStatus() != ReservationStatus.CANCEL_REQUESTED) {
+            throw new InvalidReservationException("此預約目前不是待審核狀態");
+        }
+
+        if (requestDto.getAction() == ReviewAction.APPROVED) {
+            reservation.approveCancelRequest();
+        } else {
+            reservation.rejectCancelRequest();
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        ReservationReview review = ReservationReview.builder()
+                .reservation(reservation)
+                .reviewer(reviewer)
+                .action(requestDto.getAction())
+                .comment(requestDto.getComment())
+                .reviewedAt(now)
+                .createdAt(now)
+                .build();
+        reservationReviewRepository.save(review);
+
+        return reservationMapper.toResponseDto(reservation);
     }
 
     private void validateTimeRules(LocalDateTime startTime, LocalDateTime endTime) {
