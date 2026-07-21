@@ -3,6 +3,7 @@ package com.company.meetingroom.service;
 import com.company.meetingroom.dto.ReservationRequestDto;
 import com.company.meetingroom.dto.ReservationResponseDto;
 import com.company.meetingroom.entity.*;
+import com.company.meetingroom.exception.InvalidReservationException;
 import com.company.meetingroom.exception.ReservationConflictException;
 import com.company.meetingroom.exception.ResourceNotFoundException;
 import com.company.meetingroom.mapper.ReservationMapper;
@@ -101,5 +102,84 @@ class ReservationServiceTest {
         assertThat(result.getId()).isEqualTo(100L);
         assertThat(result.getStatus()).isEqualTo(ReservationStatus.PROCESSING);
         verify(reservationRepository, times(1)).save(any(Reservation.class));
+    }
+    @Test
+    void reserveRoom_shouldThrowNotFoundException_whenRoomDoesNotExist() {
+        when(roomRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reservationService.create(validRequest))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("找不到");
+
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    void reserveRoom_shouldThrowNotFoundException_whenUserDoesNotExist() {
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reservationService.create(validRequest))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    void reserveRoom_shouldThrowException_whenStartTimeAfterEndTime() {
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        validRequest.setStartTime(LocalDateTime.now().plusDays(1).withHour(11).withMinute(0));
+        validRequest.setEndTime(LocalDateTime.now().plusDays(1).withHour(10).withMinute(0));
+
+        assertThatThrownBy(() -> reservationService.create(validRequest))
+                .isInstanceOf(InvalidReservationException.class)
+                .hasMessageContaining("startTime 必須早於 endTime");
+
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    void reserveRoom_shouldThrowException_whenReservingPastTime() {
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        validRequest.setStartTime(LocalDateTime.now().minusDays(1));
+        validRequest.setEndTime(LocalDateTime.now().minusDays(1).plusHours(1));
+
+        assertThatThrownBy(() -> reservationService.create(validRequest))
+                .isInstanceOf(InvalidReservationException.class)
+                .hasMessageContaining("不可預約過去時間");
+
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    void reserveRoom_shouldThrowException_whenAttendeeCountExceedsCapacity() {
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        validRequest.setAttendeeCount(999);  // testRoom 容量是 10
+
+        assertThatThrownBy(() -> reservationService.create(validRequest))
+                .isInstanceOf(InvalidReservationException.class)
+                .hasMessageContaining("超過會議室容量");
+
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    void reserveRoom_shouldThrowConflictException_whenRoomAlreadyBooked() {
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(reservationRepository.findConflictingReservations(any(), any(), any(), any()))
+                .thenReturn(List.of(mock(Reservation.class)));  // 假裝有一筆衝突的預約存在
+
+        assertThatThrownBy(() -> reservationService.create(validRequest))
+                .isInstanceOf(ReservationConflictException.class)
+                .hasMessageContaining("已被預約");
+
+        verify(reservationRepository, never()).save(any());
     }
 }
