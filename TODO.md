@@ -91,8 +91,8 @@
 - [x] `GET /api/reservations`(分頁、排序、多條件篩選)
 - [x] `GET /api/rooms/{roomId}/reservations`
 - [x] `GET /api/reservations/timeline?date=`(避免 N+1)
-- [ ] `GET /api/reservations/monthly-summary?year=&month=`
-- [ ] `GET /api/rooms/top-used?year=&month=`
+- [x] `GET /api/reservations/monthly-summary?year=&month=`
+- [x] `GET /api/rooms/top-used?year=&month=`
 
 ## 階段 8:Validation 與錯誤處理 2-3hr
 
