@@ -4,6 +4,7 @@ import com.company.meetingroom.dto.CancelRequestDto;
 import com.company.meetingroom.dto.ReservationRequestDto;
 import com.company.meetingroom.dto.ReservationResponseDto;
 import com.company.meetingroom.dto.ReviewRequestDto;
+import com.company.meetingroom.dto.TimelineResponseDto;
 import com.company.meetingroom.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -58,5 +59,10 @@ public class ReservationController {
             @PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
         return ResponseEntity.ok(
                 reservationService.search(dateFrom, dateTo, roomId, roomName, username, status, pageable));
+    }
+
+    @GetMapping("/timeline")
+    public ResponseEntity<TimelineResponseDto> getTimeline(@RequestParam LocalDate date) {
+        return ResponseEntity.ok(reservationService.getTimeline(date));
     }
 }

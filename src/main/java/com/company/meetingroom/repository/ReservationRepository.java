@@ -32,4 +32,16 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
         @Param("blockingStatuses") List<ReservationStatus> blockingStatuses
     );
     List<Reservation> findByRoomIdOrderByStartTimeAsc(Long roomId);
+    @Query("""
+        SELECT r FROM Reservation r
+        JOIN FETCH r.user
+        WHERE r.status = :status
+        AND r.startTime >= :dayStart
+        AND r.startTime < :dayEnd
+        """)
+    List<Reservation> findApprovedReservationsForTimeline(
+            @Param("status") ReservationStatus status,
+            @Param("dayStart") LocalDateTime dayStart,
+            @Param("dayEnd") LocalDateTime dayEnd
+    );
 }

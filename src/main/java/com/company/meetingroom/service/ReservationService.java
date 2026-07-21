@@ -2,6 +2,9 @@ package com.company.meetingroom.service;
 
 import com.company.meetingroom.dto.ReservationRequestDto;
 import com.company.meetingroom.dto.ReservationResponseDto;
+import com.company.meetingroom.dto.TimelineResponseDto;
+import com.company.meetingroom.dto.TimelineRoomDto;
+import com.company.meetingroom.dto.TimelineReservationDto;
 import com.company.meetingroom.entity.Reservation;
 import com.company.meetingroom.entity.ReservationStatus;
 import com.company.meetingroom.entity.Room;
@@ -31,6 +34,10 @@ import java.time.LocalDate;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -156,6 +163,52 @@ public class ReservationService {
                 .stream()
                 .map(reservationMapper::toResponseDto)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public TimelineResponseDto getTimeline(LocalDate date) {
+        List<Room> activeRooms = roomRepository.findByIsActiveTrueOrderByNameAsc();
+
+        LocalDateTime dayStart = date.atStartOfDay();
+        LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
+
+        List<Reservation> reservations = reservationRepository.findApprovedReservationsForTimeline(
+                ReservationStatus.APPROVED, dayStart, dayEnd);
+
+        Map<Long, List<Reservation>> reservationsByRoomId = reservations.stream()
+                .collect(Collectors.groupingBy(r -> r.getRoom().getId()));
+
+        List<TimelineRoomDto> roomDtos = activeRooms.stream()
+                .map(room -> buildTimelineRoomDto(room, reservationsByRoomId.getOrDefault(room.getId(), List.of())))
+                .toList();
+
+        return TimelineResponseDto.builder()
+                .date(date)
+                .rooms(roomDtos)
+                .build();
+    }
+
+    private TimelineRoomDto buildTimelineRoomDto(Room room, List<Reservation> reservations) {
+        DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm");
+
+        List<TimelineReservationDto> reservationDtos = reservations.stream()
+                .sorted(Comparator.comparing(Reservation::getStartTime))
+                .map(r -> TimelineReservationDto.builder()
+                        .reservationId(r.getId())
+                        .startTime(r.getStartTime().format(timeFormat))
+                        .endTime(r.getEndTime().format(timeFormat))
+                        .username(r.getUser().getUsername())
+                        .subject(r.getSubject())
+                        .status(r.getStatus())
+                        .build())
+                .toList();
+
+        return TimelineRoomDto.builder()
+                .roomId(room.getId())
+                .roomName(room.getName())
+                .capacity(room.getCapacity())
+                .reservations(reservationDtos)
+                .build();
     }
 
     private void validateTimeRules(LocalDateTime startTime, LocalDateTime endTime) {
