@@ -103,7 +103,7 @@
 ## 階段 9:測試 5-8hr
 
 - [x] Unit Test(JUnit5 + Mockito)- 至少涵蓋 16 項情境
-- [ ] Repository Test(@DataJpaTest)
+- [x] Repository Test(@DataJpaTest)
 - [ ] Controller Test(@WebMvcTest + MockMvc)
 - [ ] Integration Test(Testcontainers)〔加分〕
 - [ ] Concurrency Test(模擬雙執行緒搶同時段)〔加分〕
