@@ -4,6 +4,7 @@ import com.company.meetingroom.entity.Reservation;
 import com.company.meetingroom.entity.ReservationStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,7 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+public interface ReservationRepository extends JpaRepository<Reservation, Long>,
+        JpaSpecificationExecutor<Reservation>  {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

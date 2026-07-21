@@ -23,6 +23,11 @@ import com.company.meetingroom.entity.ReviewAction;
 import com.company.meetingroom.entity.Role;
 import com.company.meetingroom.exception.ForbiddenException;
 import com.company.meetingroom.repository.ReservationReviewRepository;
+import com.company.meetingroom.specification.ReservationSpecifications;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import java.time.LocalDate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -121,6 +126,23 @@ public class ReservationService {
         reservationReviewRepository.save(review);
 
         return reservationMapper.toResponseDto(reservation);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReservationResponseDto> search(
+            LocalDate dateFrom, LocalDate dateTo, Long roomId, String roomName,
+            String username, ReservationStatus status, Pageable pageable) {
+
+        Specification<Reservation> spec = Specification
+                .where(ReservationSpecifications.dateFrom(dateFrom))
+                .and(ReservationSpecifications.dateTo(dateTo))
+                .and(ReservationSpecifications.roomId(roomId))
+                .and(ReservationSpecifications.roomName(roomName))
+                .and(ReservationSpecifications.username(username))
+                .and(ReservationSpecifications.status(status));
+
+        return reservationRepository.findAll(spec, pageable)
+                .map(reservationMapper::toResponseDto);
     }
 
     private void validateTimeRules(LocalDateTime startTime, LocalDateTime endTime) {
