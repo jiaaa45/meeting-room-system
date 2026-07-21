@@ -2,6 +2,7 @@ package com.company.meetingroom.controller;
 
 import com.company.meetingroom.dto.RoomRequestDto;
 import com.company.meetingroom.dto.RoomResponseDto;
+import com.company.meetingroom.dto.RoomUsageDto;
 import com.company.meetingroom.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -53,5 +54,11 @@ public class RoomController {
     @GetMapping("/{roomId}/reservations")
     public ResponseEntity<List<ReservationResponseDto>> getReservationsByRoom(@PathVariable Long roomId) {
         return ResponseEntity.ok(reservationService.getByRoomId(roomId));
+    }
+
+    @GetMapping("/top-used")
+    public ResponseEntity<List<RoomUsageDto>> getTopUsedRooms(
+            @RequestParam int year, @RequestParam int month) {
+        return ResponseEntity.ok(reservationService.getTopUsedRooms(year, month));
     }
 }

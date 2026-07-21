@@ -2,6 +2,9 @@ package com.company.meetingroom.repository;
 
 import com.company.meetingroom.entity.Reservation;
 import com.company.meetingroom.entity.ReservationStatus;
+import com.company.meetingroom.repository.projection.RoomUsageProjection;
+import com.company.meetingroom.repository.projection.StatusCountProjection;
+
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -43,5 +46,45 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
             @Param("status") ReservationStatus status,
             @Param("dayStart") LocalDateTime dayStart,
             @Param("dayEnd") LocalDateTime dayEnd
+    );
+
+    @Query("""
+        SELECT r.status AS status, COUNT(r) AS count
+        FROM Reservation r
+        WHERE r.startTime >= :monthStart AND r.startTime < :monthEnd
+        GROUP BY r.status
+        """)
+    List<StatusCountProjection> countByStatusInMonth(
+            @Param("monthStart") LocalDateTime monthStart,
+            @Param("monthEnd") LocalDateTime monthEnd
+    );
+
+    @Query("""
+        SELECT r FROM Reservation r
+        JOIN FETCH r.room
+        JOIN FETCH r.user
+        WHERE r.startTime >= :monthStart AND r.startTime < :monthEnd
+        ORDER BY r.startTime
+        """)
+    List<Reservation> findAllInMonth(
+            @Param("monthStart") LocalDateTime monthStart,
+            @Param("monthEnd") LocalDateTime monthEnd
+    );
+
+    @Query(value = """
+        SELECT r.room_id AS roomId, rm.name AS roomName,
+            COUNT(*) AS reservationCount,
+            CAST(SUM(EXTRACT(EPOCH FROM (r.end_time - r.start_time)) / 60) AS BIGINT) AS totalReservedMinutes
+        FROM reservations r
+        JOIN rooms rm ON rm.id = r.room_id
+        WHERE r.status = 'APPROVED'
+        AND r.start_time >= :monthStart AND r.start_time < :monthEnd
+        GROUP BY r.room_id, rm.name
+        ORDER BY reservationCount DESC
+        LIMIT 3
+        """, nativeQuery = true)
+    List<RoomUsageProjection> findTopUsedRooms(
+            @Param("monthStart") LocalDateTime monthStart,
+            @Param("monthEnd") LocalDateTime monthEnd
     );
 }

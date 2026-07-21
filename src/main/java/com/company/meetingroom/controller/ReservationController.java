@@ -1,6 +1,7 @@
 package com.company.meetingroom.controller;
 
 import com.company.meetingroom.dto.CancelRequestDto;
+import com.company.meetingroom.dto.MonthlySummaryResponseDto;
 import com.company.meetingroom.dto.ReservationRequestDto;
 import com.company.meetingroom.dto.ReservationResponseDto;
 import com.company.meetingroom.dto.ReviewRequestDto;
@@ -64,5 +65,11 @@ public class ReservationController {
     @GetMapping("/timeline")
     public ResponseEntity<TimelineResponseDto> getTimeline(@RequestParam LocalDate date) {
         return ResponseEntity.ok(reservationService.getTimeline(date));
+    }
+
+    @GetMapping("/monthly-summary")
+    public ResponseEntity<MonthlySummaryResponseDto> getMonthlySummary(
+            @RequestParam int year, @RequestParam int month) {
+        return ResponseEntity.ok(reservationService.getMonthlySummary(year, month));
     }
 }

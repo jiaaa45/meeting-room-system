@@ -16,11 +16,16 @@ import com.company.meetingroom.mapper.ReservationMapper;
 import com.company.meetingroom.repository.ReservationRepository;
 import com.company.meetingroom.repository.RoomRepository;
 import com.company.meetingroom.repository.UserRepository;
+import com.company.meetingroom.repository.projection.StatusCountProjection;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.company.meetingroom.dto.CancelRequestDto;
+import com.company.meetingroom.dto.MonthlySummaryItemDto;
+import com.company.meetingroom.dto.MonthlySummaryResponseDto;
 import com.company.meetingroom.dto.ReviewRequestDto;
+import com.company.meetingroom.dto.RoomUsageDto;
 import com.company.meetingroom.entity.ReservationReview;
 import com.company.meetingroom.entity.ReviewAction;
 import com.company.meetingroom.entity.Role;
@@ -36,6 +41,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -186,6 +192,55 @@ public class ReservationService {
                 .date(date)
                 .rooms(roomDtos)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public MonthlySummaryResponseDto getMonthlySummary(int year, int month) {
+        LocalDateTime monthStart = LocalDate.of(year, month, 1).atStartOfDay();
+        LocalDateTime monthEnd = monthStart.plusMonths(1);
+
+        Map<ReservationStatus, Long> summary = new EnumMap<>(ReservationStatus.class);
+        for (ReservationStatus status : ReservationStatus.values()) {
+            summary.put(status, 0L);
+        }
+        for (StatusCountProjection row : reservationRepository.countByStatusInMonth(monthStart, monthEnd)) {
+            summary.put(row.getStatus(), row.getCount());
+        }
+
+        List<MonthlySummaryItemDto> items = reservationRepository.findAllInMonth(monthStart, monthEnd)
+                .stream()
+                .map(r -> MonthlySummaryItemDto.builder()
+                        .reservationId(r.getId())
+                        .roomName(r.getRoom().getName())
+                        .username(r.getUser().getUsername())
+                        .startTime(r.getStartTime())
+                        .endTime(r.getEndTime())
+                        .status(r.getStatus())
+                        .build())
+                .toList();
+
+        return MonthlySummaryResponseDto.builder()
+                .year(year)
+                .month(month)
+                .summary(summary)
+                .items(items)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RoomUsageDto> getTopUsedRooms(int year, int month) {
+        LocalDateTime monthStart = LocalDate.of(year, month, 1).atStartOfDay();
+        LocalDateTime monthEnd = monthStart.plusMonths(1);
+
+        return reservationRepository.findTopUsedRooms(monthStart, monthEnd)
+                .stream()
+                .map(p -> RoomUsageDto.builder()
+                        .roomId(p.getRoomId())
+                        .roomName(p.getRoomName())
+                        .reservationCount(p.getReservationCount())
+                        .totalReservedMinutes(p.getTotalReservedMinutes())
+                        .build())
+                .toList();
     }
 
     private TimelineRoomDto buildTimelineRoomDto(Room room, List<Reservation> reservations) {
