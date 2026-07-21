@@ -31,4 +31,5 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
         @Param("endTime") LocalDateTime endTime,
         @Param("blockingStatuses") List<ReservationStatus> blockingStatuses
     );
+    List<Reservation> findByRoomIdOrderByStartTimeAsc(Long roomId);
 }

@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.company.meetingroom.dto.ReservationResponseDto;
+import com.company.meetingroom.service.ReservationService;
 
 import java.util.List;
 
@@ -17,6 +19,7 @@ import java.util.List;
 public class RoomController {
 
     private final RoomService roomService;
+    private final ReservationService reservationService;
 
     @PostMapping
     public ResponseEntity<RoomResponseDto> create(@Valid @RequestBody RoomRequestDto requestDto) {
@@ -45,5 +48,10 @@ public class RoomController {
     public ResponseEntity<Void> deactivate(@PathVariable Long id) {
         roomService.deactivate(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{roomId}/reservations")
+    public ResponseEntity<List<ReservationResponseDto>> getReservationsByRoom(@PathVariable Long roomId) {
+        return ResponseEntity.ok(reservationService.getByRoomId(roomId));
     }
 }

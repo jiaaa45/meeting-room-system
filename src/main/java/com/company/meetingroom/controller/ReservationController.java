@@ -15,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import java.time.LocalDate;
+import java.util.List;
+import com.company.meetingroom.dto.ReservationResponseDto;
+import com.company.meetingroom.service.ReservationService;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -22,7 +25,7 @@ import java.time.LocalDate;
 public class ReservationController {
 
     private final ReservationService reservationService;
-
+    
     @PostMapping
     public ResponseEntity<ReservationResponseDto> create(
             @Valid @RequestBody ReservationRequestDto requestDto) {

@@ -88,8 +88,8 @@
 
 ## 階段 7:查詢類 API 3-4hr
 
-- [ ] `GET /api/reservations`(分頁、排序、多條件篩選)
-- [ ] `GET /api/rooms/{roomId}/reservations`
+- [x] `GET /api/reservations`(分頁、排序、多條件篩選)
+- [x] `GET /api/rooms/{roomId}/reservations`
 - [ ] `GET /api/reservations/timeline?date=`(避免 N+1)
 - [ ] `GET /api/reservations/monthly-summary?year=&month=`
 - [ ] `GET /api/rooms/top-used?year=&month=`

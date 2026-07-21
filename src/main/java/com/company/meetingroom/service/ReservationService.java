@@ -145,6 +145,19 @@ public class ReservationService {
                 .map(reservationMapper::toResponseDto);
     }
 
+    @Transactional(readOnly = true)
+    public List<ReservationResponseDto> getByRoomId(Long roomId) {
+        // 先確認會議室真的存在,不存在就回 404,而不是默默回傳空清單
+        if (!roomRepository.existsById(roomId)) {
+            throw new ResourceNotFoundException("找不到 id 為 " + roomId + " 的會議室");
+        }
+
+        return reservationRepository.findByRoomIdOrderByStartTimeAsc(roomId)
+                .stream()
+                .map(reservationMapper::toResponseDto)
+                .toList();
+    }
+
     private void validateTimeRules(LocalDateTime startTime, LocalDateTime endTime) {
         if (!startTime.isBefore(endTime)) {
             throw new InvalidReservationException("startTime 必須早於 endTime");
