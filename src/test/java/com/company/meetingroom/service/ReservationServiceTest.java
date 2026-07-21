@@ -2,7 +2,9 @@ package com.company.meetingroom.service;
 
 import com.company.meetingroom.dto.ReservationRequestDto;
 import com.company.meetingroom.dto.ReservationResponseDto;
+import com.company.meetingroom.dto.ReviewRequestDto;
 import com.company.meetingroom.entity.*;
+import com.company.meetingroom.exception.ForbiddenException;
 import com.company.meetingroom.exception.InvalidReservationException;
 import com.company.meetingroom.exception.ReservationConflictException;
 import com.company.meetingroom.exception.ResourceNotFoundException;
@@ -17,6 +19,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.eq;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +29,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -179,6 +184,170 @@ class ReservationServiceTest {
         assertThatThrownBy(() -> reservationService.create(validRequest))
                 .isInstanceOf(ReservationConflictException.class)
                 .hasMessageContaining("已被預約");
+
+        verify(reservationRepository, never()).save(any());
+    }
+    @Test
+    void reserveRoom_shouldSucceed_whenDifferentRoomSameTimeSlot() {
+        // 這裡驗證的重點是:衝突查詢只針對「同一間會議室」,不同會議室不會互相干擾
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(reservationRepository.findConflictingReservations(eq(1L), any(), any(), any()))
+                .thenReturn(List.of());  // 對「這間」會議室查詢,沒有衝突
+        when(reservationRepository.save(any(Reservation.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(reservationMapper.toResponseDto(any(Reservation.class)))
+                .thenReturn(ReservationResponseDto.builder().id(200L).build());
+
+        ReservationResponseDto result = reservationService.create(validRequest);
+
+        assertThat(result).isNotNull();
+        verify(reservationRepository).findConflictingReservations(eq(1L), any(), any(), any());
+    }
+
+    @Test
+    void reserveRoom_shouldSucceed_whenExistingReservationIsRejected() {
+        // 驗證重點:findConflictingReservations 本身只會回傳「真的算佔用」的預約,
+        // 這裡直接模擬「查詢結果是空的」,代表 rejected 那筆已經被 Repository 層的條件排除掉了
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(reservationRepository.findConflictingReservations(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(reservationRepository.save(any(Reservation.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(reservationMapper.toResponseDto(any(Reservation.class)))
+                .thenReturn(ReservationResponseDto.builder().id(201L).build());
+
+        assertThatCode(() -> reservationService.create(validRequest))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void requestCancel_shouldSucceed_whenUserIsOwner() {
+        Reservation reservation = Reservation.builder()
+                .id(1L)
+                .user(testUser)
+                .status(ReservationStatus.APPROVED)
+                .build();
+
+        reservation.requestCancel(1L);  // testUser 的 id 就是 1L
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CANCEL_REQUESTED);
+        assertThat(reservation.getPreviousStatus()).isEqualTo(ReservationStatus.APPROVED);
+    }
+
+    @Test
+    void requestCancel_shouldThrowForbiddenException_whenUserIsNotOwner() {
+        Reservation reservation = Reservation.builder()
+                .id(1L)
+                .user(testUser)  // owner 是 id=1 的使用者
+                .status(ReservationStatus.APPROVED)
+                .build();
+
+        assertThatThrownBy(() -> reservation.requestCancel(999L))  // 冒充別人
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessageContaining("只有預約本人");
+    }
+
+    @Test
+    void requestCancel_shouldThrowException_whenStatusIsAlreadyRejected() {
+        Reservation reservation = Reservation.builder()
+                .id(1L)
+                .user(testUser)
+                .status(ReservationStatus.REJECTED)
+                .build();
+
+        assertThatThrownBy(() -> reservation.requestCancel(1L))
+                .isInstanceOf(InvalidReservationException.class);
+    }
+
+    @Test
+    void review_shouldSucceed_whenReviewerHasReviewerRole() {
+        User reviewer = User.builder().id(3L).role(Role.REVIEWER).build();
+        Reservation reservation = Reservation.builder()
+                .id(1L)
+                .status(ReservationStatus.CANCEL_REQUESTED)
+                .previousStatus(ReservationStatus.APPROVED)
+                .build();
+
+        ReviewRequestDto reviewRequest = new ReviewRequestDto();
+        reviewRequest.setReviewerId(3L);
+        reviewRequest.setAction(ReviewAction.APPROVED);
+
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(userRepository.findById(3L)).thenReturn(Optional.of(reviewer));
+        when(reservationMapper.toResponseDto(any(Reservation.class)))
+                .thenReturn(ReservationResponseDto.builder().id(1L).status(ReservationStatus.CANCELLED).build());
+
+        ReservationResponseDto result = reservationService.review(1L, reviewRequest);
+
+        assertThat(result.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
+        verify(reservationReviewRepository).save(any(ReservationReview.class));
+    }
+
+    @Test
+    void review_shouldThrowForbiddenException_whenReviewerHasUserRole() {
+        User notReviewer = User.builder().id(1L).role(Role.USER).build();
+        Reservation reservation = Reservation.builder()
+                .id(1L)
+                .status(ReservationStatus.CANCEL_REQUESTED)
+                .build();
+
+        ReviewRequestDto reviewRequest = new ReviewRequestDto();
+        reviewRequest.setReviewerId(1L);
+        reviewRequest.setAction(ReviewAction.APPROVED);
+
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(notReviewer));
+
+        assertThatThrownBy(() -> reservationService.review(1L, reviewRequest))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessageContaining("REVIEWER");
+
+        verify(reservationReviewRepository, never()).save(any());
+    }
+
+    @Test
+    void reserveRoom_shouldSucceed_whenExistingReservationIsCancelled() {
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(reservationRepository.findConflictingReservations(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(reservationRepository.save(any(Reservation.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(reservationMapper.toResponseDto(any(Reservation.class)))
+                .thenReturn(ReservationResponseDto.builder().id(202L).build());
+
+        assertThatCode(() -> reservationService.create(validRequest))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void reserveRoom_shouldThrowConflictException_whenExistingReservationIsProcessing() {
+        Reservation blockingReservation = mock(Reservation.class);
+
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(reservationRepository.findConflictingReservations(any(), any(), any(), any()))
+                .thenReturn(List.of(blockingReservation));
+
+        assertThatThrownBy(() -> reservationService.create(validRequest))
+                .isInstanceOf(ReservationConflictException.class);
+
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    void reserveRoom_shouldThrowConflictException_whenExistingReservationIsApproved() {
+        Reservation blockingReservation = mock(Reservation.class);
+
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(testRoom));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(reservationRepository.findConflictingReservations(any(), any(), any(), any()))
+                .thenReturn(List.of(blockingReservation));
+
+        assertThatThrownBy(() -> reservationService.create(validRequest))
+                .isInstanceOf(ReservationConflictException.class);
 
         verify(reservationRepository, never()).save(any());
     }
